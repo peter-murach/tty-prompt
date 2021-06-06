@@ -19,10 +19,13 @@ module TTY
       def initialize(prompt, **options)
         super
         @selected = SelectedChoices.new
+        @select_keys = init_action_keys(options.fetch(:select_keys, [:space]))
         @help = options[:help]
         @echo = options.fetch(:echo, true)
         @min  = options[:min]
         @max  = options[:max]
+
+        check_conflicting_keys
       end
 
       # Set a minimum number of choices
@@ -39,22 +42,28 @@ module TTY
         @max = value
       end
 
-      # Callback fired when enter/return key is pressed
+      # Default confirm keys, if not explicitly configured
       #
       # @api private
-      def keyenter(*)
+      def default_confirm_keys
+        %i[return enter].freeze
+      end
+
+      # Callback fired when a confirm key is pressed
+      #
+      # @api private
+      def confirm
         valid = true
         valid = @min <= @selected.size if @min
         valid = @selected.size <= @max if @max
 
         super if valid
       end
-      alias keyreturn keyenter
 
-      # Callback fired when space key is pressed
+      # Callback fired when the selection key is pressed
       #
       # @api private
-      def keyspace(*)
+      def select_choice
         active_choice = choices[@active - 1]
         if @selected.include?(active_choice)
           @selected.delete_at(@active - 1)
@@ -62,6 +71,17 @@ module TTY
           return if @max && @selected.size >= @max
 
           @selected.insert(@active - 1, active_choice)
+        end
+      end
+
+      # Callback fired when any key is pressed
+      #
+      # @api private
+      def keypress(event)
+        if (@select_keys.keys & [event.key.name, event.value]).empty?
+          super(event)
+        else
+          select_choice
         end
       end
 
@@ -88,6 +108,18 @@ module TTY
       end
 
       private
+
+      # Checks that there are no key options clashing
+      #
+      # @api private
+      def check_conflicting_keys
+        conflicting_keys = @confirm_keys.keys & @select_keys.keys
+        return if conflicting_keys.empty?
+
+        raise ConfigurationError,
+              ":confirm_keys #{conflicting_keys} are conflicting with " \
+              "the same keys in :select_keys"
+      end
 
       # Setup default options and active selection
       #
@@ -146,12 +178,12 @@ module TTY
         str << "(Press "
         str << "#{arrows_help} arrow"
         str << " or 1-#{choices.size} number" if enumerate?
-        str << " to move, Space"
+        str << " to move, #{keys_help(@select_keys)}"
         str << "/Ctrl+A|R" if @max.nil?
         str << " to select"
         str << " (all|rev)" if @max.nil?
         str << (filterable? ? "," : " and")
-        str << " Enter to finish"
+        str << " #{keys_help(@confirm_keys)} to finish"
         str << " and letters to filter" if filterable?
         str << ")"
         str.join

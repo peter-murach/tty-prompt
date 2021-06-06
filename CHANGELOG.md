@@ -1,5 +1,15 @@
 # Change log
 
+## [v0.24.0] - unreleased
+
+### Changed
+* Change #select and #multi_select to accept a :confirm_keys option, instead of always defaulting to space and return by Eleni Lixourioti(@Geekfish)
+* Change #multi_select to accept a :select_keys option, instead of always defaulting to space by Eleni Lixourioti(@Geekfish)
+
+### Fixed
+* Fix #select and #multi_select hint to print out the correct confirm_keys by Eleni Lixourioti(@Geekfish)
+* Fix typo in #slider show_help by Eleni Lixourioti(@Geekfish)
+
 ## [v0.23.1] - 2021-04-17
 
 ### Changed

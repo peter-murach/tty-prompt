@@ -84,6 +84,36 @@ RSpec.describe TTY::Prompt do
     expect(prompt.output.string).to eq(expected_output)
   end
 
+  it "selects item when custom key pressed and shows custom key labels" do
+    choices = %w[vodka beer wine whisky bourbon]
+    prompt.input << "\C-s\r"
+    prompt.input.rewind
+    expect(prompt.multi_select("Select drinks?", choices, select_keys: [:ctrl_s, {escape: "Esc"}])).to eq(["vodka"])
+
+    expected_output =
+      output_helper("Select drinks?", choices, "vodka", [], init: true,
+        hint: "Press #{up_down} arrow to move, Ctrl+S or Esc/Ctrl+A|R to select (all|rev) and Enter to finish") +
+      output_helper("Select drinks?", choices, "vodka", ["vodka"]) +
+      exit_message("Select drinks?", %w[vodka])
+
+    expect(prompt.output.string).to eq(expected_output)
+  end
+
+  it "selects item and confirms selection with custom keys" do
+    choices = %w[vodka beer wine whisky bourbon]
+    prompt.input << "\C-s\e"
+    prompt.input.rewind
+    expect(prompt.multi_select("Select drinks?", choices, select_keys: [:ctrl_s], confirm_keys: [{escape: "Esc"}])).to eq(["vodka"])
+
+    expected_output =
+      output_helper("Select drinks?", choices, "vodka", [], init: true,
+        hint: "Press #{up_down} arrow to move, Ctrl+S/Ctrl+A|R to select (all|rev) and Esc to finish") +
+      output_helper("Select drinks?", choices, "vodka", ["vodka"]) +
+      exit_message("Select drinks?", %w[vodka])
+
+    expect(prompt.output.string).to eq(expected_output)
+  end
+
   it "selects item when space pressed but doesn't echo item if echo: false" do
     choices = %w[vodka beer wine whisky bourbon]
     prompt.input << " \r"
@@ -250,6 +280,25 @@ RSpec.describe TTY::Prompt do
     }.to raise_error(TTY::Prompt::ConfigurationError,
                      /default index `6` out of range \(1 - 5\)/)
   end
+
+  it "raises error when confirm and select keys clash (with default select_key)" do
+    prompt.input << "\r"
+    prompt.input.rewind
+    expect {
+      prompt.multi_select("Select drinks?", %w[vodka beer wine], confirm_keys: [:space])
+    }.to raise_error(TTY::Prompt::ConfigurationError,
+                     ":confirm_keys [:space] are conflicting with the same keys in :select_keys")
+  end
+
+  it "raises error when confirm and select keys clash (configured)" do
+    prompt.input << "\r"
+    prompt.input.rewind
+    expect {
+      prompt.multi_select("Select drinks?", %w[vodka beer wine], confirm_keys: %i[space ctrl_s], select_keys: [:space])
+    }.to raise_error(TTY::Prompt::ConfigurationError,
+                     ":confirm_keys [:space] are conflicting with the same keys in :select_keys")
+  end
+
 
   it "sets prompt prefix" do
     prompt = TTY::Prompt::Test.new(prefix: "[?] ")
@@ -708,6 +757,37 @@ RSpec.describe TTY::Prompt do
         exit_message("What size?", %w[Tiny Large])
 
       expect(prompt.output.string).to eql(expected_output)
+    end
+
+    it "continues filtering when space is pressed with custom select key" do
+      choices = ["gin", "gin fizz", "gin tonic"]
+      prompt.input << "gin"
+      prompt.input << " "
+      prompt.input << "f"
+      prompt.input << "\C-s"
+      prompt.input << "\u007F"  # Delete one letter
+      prompt.input << "t"
+      prompt.input << "\C-s"
+      prompt.input << "\r"
+      prompt.input.rewind
+
+      expect(prompt.multi_select("Select drinks?", choices, filter: true, select_keys: [:ctrl_s])).to eq(["gin fizz", "gin tonic"])
+
+      expected_output =
+        output_helper("Select drinks?", choices, "gin", [], init: true,
+          hint: "Press #{up_down} arrow to move, Ctrl+S/Ctrl+A|R to select (all|rev), Enter to finish and letters to filter") +
+        output_helper("Select drinks?", choices, "gin", [], hint: "Filter: \"g\"") +
+        output_helper("Select drinks?", choices, "gin", [], hint: "Filter: \"gi\"") +
+        output_helper("Select drinks?", choices, "gin", [], hint: "Filter: \"gin\"") +
+        output_helper("Select drinks?", ["gin fizz", "gin tonic"], "gin fizz", [], hint: "Filter: \"gin \"") +
+        output_helper("Select drinks?", ["gin fizz"], "gin fizz", [], hint: "Filter: \"gin f\"") +
+        output_helper("Select drinks?", ["gin fizz"], "gin fizz", ["gin fizz"], hint: "Filter: \"gin f\"") +
+        output_helper("Select drinks?", ["gin fizz", "gin tonic"], "gin fizz", ["gin fizz"], hint: "Filter: \"gin \"") +
+        output_helper("Select drinks?", ["gin tonic"], "gin tonic", ["gin fizz"], hint: "Filter: \"gin t\"") +
+        output_helper("Select drinks?", ["gin tonic"], "gin tonic", ["gin fizz", "gin tonic"], hint: "Filter: \"gin t\"") +
+        exit_message("Select drinks?", ["gin fizz", "gin tonic"])
+
+      expect(prompt.output.string).to eq(expected_output)
     end
   end
 

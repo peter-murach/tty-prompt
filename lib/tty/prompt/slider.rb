@@ -95,7 +95,7 @@ module TTY
       #
       # @api public
       def show_help(value = (not_set = true))
-        return @show_ehlp if not_set
+        return @show_help if not_set
 
         @show_help = value
       end
