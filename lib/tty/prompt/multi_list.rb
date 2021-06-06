@@ -78,10 +78,10 @@ module TTY
       #
       # @api private
       def keypress(event)
-        if @select_keys.include?(event.key.name)
-          select_choice
-        else
+        if (@select_keys.keys & [event.key.name, event.value]).empty?
           super(event)
+        else
+          select_choice
         end
       end
 

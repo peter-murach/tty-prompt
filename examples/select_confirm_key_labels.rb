@@ -7,6 +7,6 @@ prompt = TTY::Prompt.new
 warriors = %w[Scorpion Kano Jax Kitana Raiden]
 
 answer = prompt.select("Choose your destiny?", warriors,
-                       confirm_keys: [:enter, {escape: "ESC"}])
+                       confirm_keys: [:enter, {escape: "ESC"}, ","])
 
 puts answer.inspect

@@ -90,9 +90,9 @@ module TTY
       # Initialize any default or custom action keys
       # setting up their labels and dealing with compat
       #
-      # @param [Array<Symbol, Hash{Symbol => String}>]
+      # @param [Array<Symbol, String, Hash{Symbol, String => String}>]
       #
-      # @return [Hash{Symbol => String}]
+      # @return [Hash{Symbol, String => String}]
       #
       # @api private
       def init_action_keys(keys)
@@ -113,7 +113,7 @@ module TTY
       #   keys_with_labels(keys)
       #   # => {enter: "Enter", ctrl_s: "Ctrl-S"}
       #
-      # @param [Array<Symbol, Hash{Symbol => String}>]
+      # @param [Array<Symbol, String, Hash{Symbol, String => String}>]
       #
       # @return [String]
       #
@@ -127,7 +127,7 @@ module TTY
 
       # Convert a key name into a human-readable label
       #
-      # @param [Symbol]
+      # @param [Symbol, String]
       #
       # @return [String]
       #
@@ -149,14 +149,14 @@ module TTY
       #   ensure_eol_compat(keys)
       #   # => {enter: "Enter", return: "Enter", ctrl_s: "Ctrl+S"}
       #
-      # @param [Hash{Symbol => String}]
+      # @param [Hash{Symbol, String => String}]
       #
-      # @return [Hash{Symbol => String}]
+      # @return [Hash{Symbol, String => String}]
       #
       # @api private
       def ensure_eol_compat(keys)
         eol_symbols = %i[enter return]
-        key_symbols = keys.keys.sort
+        key_symbols = keys.keys.sort_by(&:to_s)
         key_intersection = eol_symbols & key_symbols
 
         case key_intersection
@@ -265,7 +265,7 @@ module TTY
       #   keys_help(keys)
       #   # => "Enter"
       #
-      # @param [Hash{Symbol => String}]
+      # @param [Hash{Symbol, String => String}]
       #
       # @return [String]
       #
@@ -465,7 +465,7 @@ module TTY
       end
 
       def keypress(event)
-        if @confirm_keys.include?(event.key.name)
+        if !(@confirm_keys.keys & [event.key.name, event.value]).empty?
           confirm
         elsif event.key.name == :tab
           keydown

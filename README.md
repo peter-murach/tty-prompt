@@ -921,13 +921,13 @@ If the user changes or deletes a filter, the choices previously selected remain 
 
 #### 2.6.2.8 `:confirm_keys`
 
-You can configure which key(s) submit your selection (`:space` and `:return` by default): 
+You can configure which key(s) confirm your selection (`:space` and `:return` by default):
 
 ```ruby
 choices = %w(Scorpion Kano Jax)
-prompt.select("Choose your destiny?", choices, confirm_keys: [:ctrl_s])
+prompt.select("Choose your destiny?", choices, confirm_keys: [:ctrl_s, ","])
 # =>
-# Choose your destiny? (Press ↑/↓ to move and Ctrl+S to select)
+# Choose your destiny? (Press ↑/↓ to move and Ctrl+S or , to select)
 # ‣ Scorpion
 #   Kano
 #   Jax
@@ -967,15 +967,13 @@ You may also pass your own key labels to be displayed in the hint:
 
 ```ruby
 choices = ["Jax Sr", "Jax", "Jax Jr"]
-prompt.select("Choose your destiny?", choices, confirm_keys: [:enter, {escape: "ESC"}])
+prompt.select("Choose your destiny?", choices, confirm_keys: [:enter, {escape: "ESC"}, {"," => "Comma (,"})])
 # =>
-# Choose your destiny? (Press ↑/↓ to move and Enter or ESC to select)
+# Choose your destiny? (Press ↑/↓ to move and Enter, ESC or Comma (,) to select)
 # ‣ Jax Sr
 #   Jax
 #   Jax Jr
 ```
-
-Please note that alphanumeric keys are *not* supported.
 
 ### 2.6.3 multi_select
 
@@ -1217,11 +1215,11 @@ prompt.multi_select("Select drinks?", choices, max: 3)
 #### 2.6.3.10 `:confirm_keys`
 
 This works similar to the [same option for `select`](#2628-confirm_keys).
-You can configure which key(s) submit your selection (`:return` by default): 
+You can configure which key(s) confirm your selection (`:return` by default):
 
 ```ruby
 choices = %w(vodka beer wine whisky bourbon)
-prompt.multi_select("Select drinks?", choices, confirm_keys: [:ctrl_s])
+prompt.multi_select("Select drinks?", choices, confirm_keys: [:ctrl_s, ","])
 # =>
 # Select drinks? vodka, beer, whisky
 #   ⬢ vodka
@@ -1231,13 +1229,11 @@ prompt.multi_select("Select drinks?", choices, confirm_keys: [:ctrl_s])
 # ‣ ⬡ bourbon
 ```
 
-The user can then press the `Ctrl+S` key to confirm their selection:
+The user can then press the `Ctrl+S` or the `,` key to confirm their selection:
 ```ruby
 # =>
 # Select drinks? vodka, beer, whisky
 ```
-
-Please note that alphanumeric keys are *not* supported.
 
 #### 2.6.3.11 `:select_keys`
 
@@ -1294,8 +1290,6 @@ prompt.multi_select("Select drinks?", choices, filter: true, select_keys: [{ctr_
 #   ⬡ gin fizz
 #   ⬡ beer
 ```
-
-Please note that alphanumeric keys are *not* supported.
 
 ### 2.6.4 enum_select
 
